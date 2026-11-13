@@ -1,0 +1,77 @@
+@import 'tailwindcss';
+
+/**
+ * Theme tokens are injected at runtime by applyTheme() in src/config/applyTheme.ts.
+ * The values below are the Dark Spy defaults so the very first paint is correct
+ * even before any JavaScript has run.
+ */
+:root {
+  --color-bg: #0b1020;
+  --color-surface: #151b2e;
+  --color-surface-raised: #1e2640;
+  --color-border: #2c3553;
+  --color-text: #f2f5ff;
+  --color-text-muted: #9aa5c4;
+  --color-accent: #6c8cff;
+  --color-accent-contrast: #06091a;
+  --color-positive: #3ddc97;
+  --color-danger: #ff5c7a;
+  --color-warning: #ffb340;
+  --color-secrecy-cover: #0b1020;
+}
+
+/* Expose the tokens above to Tailwind as real utilities: bg-surface, text-muted, etc. */
+@theme inline {
+  --color-bg: var(--color-bg);
+  --color-surface: var(--color-surface);
+  --color-surface-raised: var(--color-surface-raised);
+  --color-border: var(--color-border);
+  --color-text: var(--color-text);
+  --color-muted: var(--color-text-muted);
+  --color-accent: var(--color-accent);
+  --color-accent-contrast: var(--color-accent-contrast);
+  --color-positive: var(--color-positive);
+  --color-danger: var(--color-danger);
+  --color-warning: var(--color-warning);
+  --color-secrecy-cover: var(--color-secrecy-cover);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  /* Mobile-first: stop rubber-band scrolling from making the game feel broken. */
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Accessibility: honour the phone's "reduce motion" setting everywhere. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Private information must never be selectable or long-press-copyable. */
+.secrecy-protected {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
