@@ -106,7 +106,7 @@ export interface PublicPlayer {
 // ---------------------------------------------------------------------------
 
 export type MatchEndMode = 'fixed_rounds' | 'target_score' | 'host_manual';
-export type FixedRoundCount = 3 | 5 | 7 | 10;
+export type FixedRoundCount = 1 | 2 | 3 | 4 | 5;
 export type ImposterCountMode = 'automatic' | 'manual';
 export type Difficulty = 'easy' | 'medium' | 'hard';
 export type AgeGroup = 'family' | 'teen' | 'adult';

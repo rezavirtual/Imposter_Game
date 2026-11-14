@@ -10,9 +10,9 @@ import {
 describe('specification defaults', () => {
   const settings = defaultHostSettings(6);
 
-  it('defaults to 5 fixed rounds', () => {
+  it('defaults to one fixed round', () => {
     expect(settings.matchEndMode).toBe('fixed_rounds');
-    expect(settings.fixedRounds).toBe(5);
+    expect(settings.fixedRounds).toBe(1);
   });
 
   it('defaults to automatic imposter count', () => {
@@ -56,7 +56,7 @@ describe('imposter information defaults', () => {
 
 describe('available choices', () => {
   it('offers exactly the specified round counts', () => {
-    expect(FIXED_ROUND_CHOICES).toEqual([3, 5, 7, 10]);
+    expect(FIXED_ROUND_CHOICES).toEqual([1, 2, 3, 4, 5]);
   });
 
   it('offers off plus the specified timer lengths', () => {
