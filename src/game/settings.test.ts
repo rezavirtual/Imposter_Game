@@ -25,6 +25,10 @@ describe('specification defaults', () => {
     expect(settings.region).toBe('global');
   });
 
+  it('defaults to choosing a random category each round', () => {
+    expect(settings.category).toBe('random');
+  });
+
   it('defaults to a 30-second guidance timer', () => {
     expect(settings.clueTimerSeconds).toBe(30);
   });

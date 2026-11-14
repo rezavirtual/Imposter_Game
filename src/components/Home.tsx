@@ -18,7 +18,7 @@ export function Home({ onRoomJoined }: HomeProps) {
   const [roomFromLink] = useState(() => getRoomCodeFromUrl(window.location.href));
   const [mode, setMode] = useState<Mode>(roomFromLink ? 'join' : 'idle');
   const [nickname, setNickname] = useState('');
-  const [category, setCategory] = useState('any');
+  const [category, setCategory] = useState('random');
   const [roomCode, setRoomCode] = useState(roomFromLink ?? '');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -192,7 +192,7 @@ export function Home({ onRoomJoined }: HomeProps) {
                 onChange={(e) => setCategory(e.target.value)}
                 className="mt-1.5 w-full rounded-xl border border-border bg-surface-raised px-4 py-3 text-base text-text focus:border-accent focus:outline-none"
               >
-                <option value="any">Any Category</option>
+                <option value="random">Random</option>
                 {WORD_CATEGORIES.map((wordCategory) => (
                   <option key={wordCategory} value={wordCategory}>
                     {wordCategory}
@@ -200,7 +200,7 @@ export function Home({ onRoomJoined }: HomeProps) {
                 ))}
               </select>
               <p className="mt-1 text-xs text-muted">
-                The imposter will receive the chosen category as a clue.
+                Random picks a category for each round. The imposter will receive it as a clue.
               </p>
             </div>
 

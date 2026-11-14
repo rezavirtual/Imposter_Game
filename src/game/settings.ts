@@ -2,7 +2,8 @@
  * HOST SETTINGS AND DEFAULTS
  * --------------------------
  * Defaults come straight from the specification:
- *   5 rounds, automatic imposter count, Category Hint for the imposter,
+ *   5 rounds, automatic imposter count, a random category each round,
+ *   Category Hint for the imposter,
  *   medium difficulty, Family age group,
  *   Global region, 30-second guidance timer, imposter allowed to start,
  *   Dark Spy theme.
@@ -41,7 +42,7 @@ export function defaultHostSettings(playerCount: number): HostSettings {
 
     imposterInfo: 'category_hint',
 
-    category: 'any',
+    category: 'random',
     difficulty: 'medium',
     region: 'global',
     ageGroup: 'family',

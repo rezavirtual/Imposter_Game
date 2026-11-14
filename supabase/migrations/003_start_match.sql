@@ -96,7 +96,17 @@ begin
 
   -- The imposter always receives the selected category as a clue.
   v_imposter_info := 'category_hint';
-  v_category := coalesce(nullif(v_room.settings->>'category', ''), 'any');
+  v_category := coalesce(nullif(v_room.settings->>'category', ''), 'random');
+  if v_category = 'random' then
+    select available.category into v_category
+    from (select distinct category from public.word_bank) as available
+    order by random()
+    limit 1;
+
+    if v_category is null then
+      v_category := 'any';
+    end if;
+  end if;
 
   if v_room.settings ? 'allowImposterFirst' then
     v_allow_imposter_first := (v_room.settings->>'allowImposterFirst')::boolean;
