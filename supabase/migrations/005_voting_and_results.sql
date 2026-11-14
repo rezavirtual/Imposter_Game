@@ -240,14 +240,17 @@ begin
   -- Build tallies JSON
   select jsonb_agg(
     jsonb_build_object(
-      'targetId', target_player_id,
-      'isNoImposter', is_no_imposter,
-      'count', count(*)::int
+      'targetId', tally.target_player_id,
+      'isNoImposter', tally.is_no_imposter,
+      'count', tally.vote_count
     )
   ) into v_tallies
-  from public.votes
-  where round_id = p_round_id and is_revote = v_is_revote
-  group by target_player_id, is_no_imposter;
+  from (
+    select target_player_id, is_no_imposter, count(*)::int as vote_count
+    from public.votes
+    where round_id = p_round_id and is_revote = v_is_revote
+    group by target_player_id, is_no_imposter
+  ) tally;
 
   -- Score each player according to the official rules
   for v_p in (select * from public.players where room_id = v_room.id and removed_at is null) loop
