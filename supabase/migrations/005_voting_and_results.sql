@@ -95,16 +95,23 @@ begin
 
   -- ALL VOTES LOCKED: Authoritatively resolve the tally using pure aggregation
   -- This approach avoids the conditional syntax error when there are no votes or ties
-  select
-    coalesce(max(vote_count), 0)::int,
-    count(*)::int
-  into v_max_votes, v_leader_count
+  select coalesce(max(vote_count), 0)::int
+  into v_max_votes
   from (
     select count(*)::int as vote_count
     from public.votes
     where round_id = p_round_id and is_revote = v_is_revote
-    group by target_player_id
+    group by target_player_id, is_no_imposter
   ) c;
+
+  select count(*)::int into v_leader_count
+  from (
+    select count(*)::int as vote_count
+    from public.votes
+    where round_id = p_round_id and is_revote = v_is_revote
+    group by target_player_id, is_no_imposter
+  ) c
+  where vote_count = v_max_votes;
 
   -- Build the list of tied suspects if leader_count > 1
   if v_leader_count > 1 then
@@ -113,7 +120,7 @@ begin
       select target_player_id, count(*)::int as vote_count
       from public.votes
       where round_id = p_round_id and is_revote = v_is_revote
-      group by target_player_id
+      group by target_player_id, is_no_imposter
     ) c2
     where c2.vote_count = v_max_votes;
   else
@@ -123,7 +130,7 @@ begin
       select target_player_id, count(*)::int as vote_count
       from public.votes
       where round_id = p_round_id and is_revote = v_is_revote
-      group by target_player_id
+      group by target_player_id, is_no_imposter
     ) c3
     where c3.vote_count = v_max_votes;
   end if;

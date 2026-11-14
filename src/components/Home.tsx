@@ -5,6 +5,7 @@ import { applyTheme } from '../config/applyTheme';
 import { checkNickname } from '../game/nickname';
 import { normalizeRoomCodeInput, describeRoomCodeProblem } from '../game/roomCode';
 import { getRoomCodeFromUrl } from '../game/roomShare';
+import { WORD_CATEGORIES } from '../game/settings';
 import { createRoom, joinRoom, type RoomJoinResult } from '../lib/roomService';
 
 interface HomeProps {
@@ -17,6 +18,7 @@ export function Home({ onRoomJoined }: HomeProps) {
   const [roomFromLink] = useState(() => getRoomCodeFromUrl(window.location.href));
   const [mode, setMode] = useState<Mode>(roomFromLink ? 'join' : 'idle');
   const [nickname, setNickname] = useState('');
+  const [category, setCategory] = useState('any');
   const [roomCode, setRoomCode] = useState(roomFromLink ?? '');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -34,7 +36,7 @@ export function Home({ onRoomJoined }: HomeProps) {
 
     setLoading(true);
     try {
-      const res = await createRoom(nickCheck.nickname);
+      const res = await createRoom(nickCheck.nickname, { category });
       onRoomJoined({ ...res, nickname: nickCheck.nickname });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create room');
@@ -178,6 +180,28 @@ export function Home({ onRoomJoined }: HomeProps) {
                 placeholder="e.g. Agent 007"
                 className="mt-1.5 w-full rounded-xl border border-border bg-surface-raised px-4 py-3 text-base text-text placeholder-muted/60 focus:border-accent focus:outline-none"
               />
+            </div>
+
+            <div>
+              <label htmlFor="host-category" className="text-xs font-medium text-muted">
+                Word Category
+              </label>
+              <select
+                id="host-category"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="mt-1.5 w-full rounded-xl border border-border bg-surface-raised px-4 py-3 text-base text-text focus:border-accent focus:outline-none"
+              >
+                <option value="any">Any Category</option>
+                {WORD_CATEGORIES.map((wordCategory) => (
+                  <option key={wordCategory} value={wordCategory}>
+                    {wordCategory}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-muted">
+                The imposter will receive the chosen category as a clue.
+              </p>
             </div>
 
             <button

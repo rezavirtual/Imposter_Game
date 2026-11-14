@@ -20,6 +20,7 @@ declare
   v_player_ids uuid[];
   v_player_count integer;
   v_imposter_count integer := 1;
+  v_category text;
   v_imposters uuid[];
   v_regular_ids uuid[];
   v_secret record;
@@ -93,16 +94,9 @@ begin
     v_imposter_count := 2;
   end if;
 
-  -- Host settings override if set
-  if v_room.settings ? 'imposterInfo' then
-    v_imposter_info := v_room.settings->>'imposterInfo';
-  else
-    if v_player_count <= 3 then
-      v_imposter_info := 'category_hint';
-    else
-      v_imposter_info := 'no_word';
-    end if;
-  end if;
+  -- The imposter always receives the selected category as a clue.
+  v_imposter_info := 'category_hint';
+  v_category := coalesce(nullif(v_room.settings->>'category', ''), 'any');
 
   if v_room.settings ? 'allowImposterFirst' then
     v_allow_imposter_first := (v_room.settings->>'allowImposterFirst')::boolean;
@@ -123,10 +117,14 @@ begin
   -- 6. Pick secret word from word bank
   select * into v_secret
   from public.word_bank
+  where v_category = 'any' or category = v_category
   order by random()
   limit 1;
 
   if not found then
+    if v_category <> 'any' then
+      raise exception 'No words available for category %', v_category;
+    end if;
     -- Fallback safety word if bank was empty
     v_secret.word := 'Compass';
     v_secret.category := 'Objects';

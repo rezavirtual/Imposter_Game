@@ -191,6 +191,12 @@ function votes(entries: Record<string, string>): Map<PlayerId, VoteTarget> {
 }
 
 describe('resolving votes', () => {
+  it('resolves a 2-to-1 majority in a three-player vote', () => {
+    const result = resolveVotes(votes({ a: 'b', b: 'a', c: 'b' }), { isRevote: false });
+    expect(result.eliminatedPlayerId).toBe('b');
+    expect(result.isTied).toBe(false);
+  });
+
   it('eliminates the clear leader', () => {
     const result = resolveVotes(votes({ a: 'b', c: 'b', d: 'a' }), { isRevote: false });
     expect(result.eliminatedPlayerId).toBe('b');

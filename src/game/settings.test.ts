@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { defaultHostSettings, reconcileSettings, CLUE_TIMER_CHOICES, FIXED_ROUND_CHOICES } from './settings';
+import {
+  defaultHostSettings,
+  reconcileSettings,
+  CLUE_TIMER_CHOICES,
+  FIXED_ROUND_CHOICES,
+  WORD_CATEGORIES,
+} from './settings';
 
 describe('specification defaults', () => {
   const settings = defaultHostSettings(6);
@@ -36,14 +42,10 @@ describe('specification defaults', () => {
   });
 });
 
-describe('imposter information default depends on player count', () => {
-  it('uses Category Hint for three players', () => {
-    expect(defaultHostSettings(3).imposterInfo).toBe('category_hint');
-  });
-
-  it('uses No Word for four or more players', () => {
-    for (let n = 4; n <= 10; n += 1) {
-      expect(defaultHostSettings(n).imposterInfo).toBe('no_word');
+describe('imposter information defaults', () => {
+  it('gives the imposter a category hint at every player count', () => {
+    for (let n = 2; n <= 10; n += 1) {
+      expect(defaultHostSettings(n).imposterInfo).toBe('category_hint');
     }
   });
 });
@@ -55,6 +57,10 @@ describe('available choices', () => {
 
   it('offers off plus the specified timer lengths', () => {
     expect(CLUE_TIMER_CHOICES).toEqual([null, 15, 20, 30, 45, 60]);
+  });
+
+  it('offers the categories included in the word bank', () => {
+    expect(WORD_CATEGORIES).toEqual(['Animals', 'Food', 'Places', 'Objects', 'Jobs']);
   });
 });
 
@@ -73,10 +79,10 @@ describe('reconciling after the player count changes', () => {
     expect(result.notes).toEqual([]);
   });
 
-  it('suggests Category Hint when a room shrinks to three players', () => {
+  it('keeps the imposter category hint when a room shrinks to three players', () => {
     const settings = { ...defaultHostSettings(6) };
     const result = reconcileSettings(settings, 3);
-    expect(result.notes.some((n) => /category hint/i.test(n))).toBe(true);
+    expect(result.settings.imposterInfo).toBe('category_hint');
   });
 
   it('never mutates the settings it was given', () => {

@@ -60,10 +60,7 @@ export interface PrivateRole {
   role: Role;
   /** The secret word. `null` for imposters — always, with no exception. */
   secretWord: string | null;
-  /**
-   * The category. Regular players always see it. Imposters see it only when
-   * the host enabled Category Hint.
-   */
+  /** Regular players see the category; imposters receive it as their clue. */
   category: string | null;
   /** Short plain-language instruction shown under the role. */
   instruction: string;
@@ -111,7 +108,6 @@ export interface PublicPlayer {
 export type MatchEndMode = 'fixed_rounds' | 'target_score' | 'host_manual';
 export type FixedRoundCount = 3 | 5 | 7 | 10;
 export type ImposterCountMode = 'automatic' | 'manual';
-export type ImposterInfoMode = 'no_word' | 'category_hint';
 export type Difficulty = 'easy' | 'medium' | 'hard';
 export type AgeGroup = 'family' | 'teen' | 'adult';
 export type ClueTimerSeconds = 15 | 20 | 30 | 45 | 60;
@@ -127,7 +123,7 @@ export interface HostSettings {
   /** Used when imposterCountMode is 'manual'. */
   manualImposterCount: number;
 
-  imposterInfo: ImposterInfoMode;
+  imposterInfo: 'category_hint';
 
   /** Word-pack selectors. 'any' means no restriction. */
   category: string;

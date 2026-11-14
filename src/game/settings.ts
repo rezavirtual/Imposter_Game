@@ -2,19 +2,14 @@
  * HOST SETTINGS AND DEFAULTS
  * --------------------------
  * Defaults come straight from the specification:
- *   5 rounds, automatic imposter count, Category Hint for three players,
- *   No Word for four or more, medium difficulty, Family age group,
+ *   5 rounds, automatic imposter count, Category Hint for the imposter,
+ *   medium difficulty, Family age group,
  *   Global region, 30-second guidance timer, imposter allowed to start,
  *   Dark Spy theme.
  */
 
 import { DEFAULT_THEME_ID } from '../config/themes';
-import type {
-  ClueTimerSeconds,
-  FixedRoundCount,
-  HostSettings,
-  ImposterInfoMode,
-} from './types';
+import type { ClueTimerSeconds, FixedRoundCount, HostSettings } from './types';
 import { allowedImposterCounts, recommendedImposterCount } from './imposterCount';
 
 export const FIXED_ROUND_CHOICES: readonly FixedRoundCount[] = [3, 5, 7, 10];
@@ -26,18 +21,16 @@ export const CLUE_TIMER_CHOICES: readonly (ClueTimerSeconds | null)[] = [
   45,
   60,
 ];
+export const WORD_CATEGORIES = ['Animals', 'Food', 'Places', 'Objects', 'Jobs'] as const;
 
 export const DEFAULT_TARGET_SCORE = 15;
 
 /**
  * Builds the default settings for a room.
  *
- * Imposter information depends on the player count: three-player games get
- * Category Hint to stay fair, larger games get No Word.
+ * The imposter always gets the word's category as a clue.
  */
 export function defaultHostSettings(playerCount: number): HostSettings {
-  const imposterInfo: ImposterInfoMode = playerCount <= 3 ? 'category_hint' : 'no_word';
-
   return {
     matchEndMode: 'fixed_rounds',
     fixedRounds: 5,
@@ -46,7 +39,7 @@ export function defaultHostSettings(playerCount: number): HostSettings {
     imposterCountMode: 'automatic',
     manualImposterCount: playerCount >= 3 ? recommendedImposterCount(playerCount) : 1,
 
-    imposterInfo,
+    imposterInfo: 'category_hint',
 
     category: 'any',
     difficulty: 'medium',
@@ -87,12 +80,6 @@ export function reconcileSettings(
       );
       next.manualImposterCount = repaired;
     }
-  }
-
-  if (playerCount <= 3 && next.imposterInfo === 'no_word') {
-    notes.push(
-      'With three players, Category Hint is recommended so the imposter is not too easy to spot. You can still switch it off.',
-    );
   }
 
   return { settings: next, notes };
