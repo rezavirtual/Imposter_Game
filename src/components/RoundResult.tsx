@@ -20,6 +20,7 @@ export function RoundResult({
 }: RoundResultProps) {
   const [result, setResult] = useState<RoundResultSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [countdown, setCountdown] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,6 +32,7 @@ export function RoundResult({
         const data = await getRoundResult(roundId);
         if (!cancelled && data) {
           setResult(data);
+          setCountdown(5);
         }
       } catch (err) {
         if (!cancelled) {
@@ -49,6 +51,18 @@ export function RoundResult({
       cancelled = true;
     };
   }, [roundId]);
+
+  useEffect(() => {
+    if (countdown === null) return;
+
+    const timer = window.setTimeout(() => {
+      setCountdown((remaining) =>
+        remaining === null || remaining <= 1 ? null : remaining - 1,
+      );
+    }, 1000);
+
+    return () => window.clearTimeout(timer);
+  }, [countdown]);
 
   if (loading) {
     return (
@@ -72,6 +86,30 @@ export function RoundResult({
     .filter((p) => result.imposterPlayerIds.includes(p.id))
     .map((p) => p.nickname)
     .join(', ');
+
+  if (countdown !== null) {
+    return (
+      <main
+        aria-live="assertive"
+        aria-label={`The imposter will be revealed in ${countdown} seconds`}
+        className="mx-auto flex min-h-full w-full max-w-md flex-col items-center justify-center px-5 py-8 text-center"
+      >
+        <p className="text-sm font-bold tracking-[0.3em] uppercase text-danger">
+          The votes are in
+        </p>
+        <div className="relative mt-8 grid h-64 w-64 place-items-center rounded-full border-2 border-danger/50 bg-danger/10 shadow-[0_0_70px_var(--color-danger)]">
+          <div className="absolute inset-3 rounded-full border border-danger/30" />
+          <span key={countdown} className="animate-pulse font-mono text-8xl font-black text-text">
+            {countdown}
+          </span>
+        </div>
+        <h1 className="mt-8 text-3xl font-black tracking-wider text-text">
+          IMPOSTER REVEAL
+        </h1>
+        <p className="mt-2 text-sm text-muted">The truth comes out in...</p>
+      </main>
+    );
+  }
 
   const handleNextRound = async () => {
     setSubmitting(true);
@@ -106,6 +144,18 @@ export function RoundResult({
 
       {/* Main Results Card */}
       <div className="my-auto flex flex-col gap-5 py-4">
+        <section className="relative overflow-hidden rounded-3xl border-2 border-danger/50 bg-gradient-to-br from-danger/20 via-surface to-surface p-6 text-center shadow-[0_0_40px_var(--color-danger)]">
+          <p className="text-xs font-black tracking-[0.3em] uppercase text-danger">
+            The mask comes off
+          </p>
+          <h2 className="mt-3 text-sm font-bold tracking-widest text-muted">
+            {result.imposterPlayerIds.length > 1 ? 'THE IMPOSTERS WERE' : 'THE IMPOSTER WAS'}
+          </h2>
+          <p className="mt-2 break-words text-4xl font-black tracking-wide text-text">
+            {imposterNicknames || 'No Imposter'}
+          </p>
+        </section>
+
         {/* The Secret Word Reveal */}
         <div className="rounded-3xl border border-border bg-surface p-5 text-center shadow-xl">
           <p className="text-xs font-bold tracking-wider uppercase text-muted">The Secret Word Was</p>
