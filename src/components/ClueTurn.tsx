@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { getRoundInfo, giveClue, advanceTurnByHost, type RoundInfo } from '../lib/clueService';
 import { playGentleChime } from '../lib/audio';
+import { clueTurnProgress } from '../game/clueOrder';
 import type { PublicPlayer } from '../game/types';
 
 interface ClueTurnProps {
@@ -24,9 +25,15 @@ export function ClueTurn({ roundId, playerId, isHost, players }: ClueTurnProps) 
     let cancelled = false;
 
     async function load() {
-      const info = await getRoundInfo(roundId);
-      if (info && !cancelled) {
-        setRoundInfo(info);
+      try {
+        const info = await getRoundInfo(roundId);
+        if (info && !cancelled) {
+          setRoundInfo(info);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to load clue round');
+        }
       }
     }
 
@@ -75,6 +82,14 @@ export function ClueTurn({ roundId, playerId, isHost, players }: ClueTurnProps) 
   }, [timeLeft]);
 
   if (!roundInfo || roundInfo.clueOrder.length === 0) {
+    if (error) {
+      return (
+        <main className="mx-auto flex min-h-full w-full max-w-md flex-col items-center justify-center px-5 py-8 text-center">
+          <p className="text-sm font-semibold text-danger">{error}</p>
+        </main>
+      );
+    }
+
     return (
       <main className="mx-auto flex min-h-full w-full max-w-md flex-col items-center justify-center px-5 py-8 text-center">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
@@ -83,12 +98,18 @@ export function ClueTurn({ roundId, playerId, isHost, players }: ClueTurnProps) 
     );
   }
 
-  const activeSpeakerId = roundInfo.clueOrder[roundInfo.currentTurnIndex];
+  const progress = clueTurnProgress({
+    order: roundInfo.clueOrder,
+    currentIndex: roundInfo.currentTurnIndex,
+    clueRounds: roundInfo.clueRoundCount,
+  });
+  const activeSpeakerId =
+    roundInfo.currentTurnIndex < progress.totalTurns
+      ? roundInfo.clueOrder[roundInfo.currentTurnIndex % roundInfo.clueOrder.length]
+      : null;
   const isActivePlayer = activeSpeakerId === playerId;
   const activeSpeaker = players.find((p) => p.id === activeSpeakerId);
   const speakerName = activeSpeaker?.nickname ?? 'Player';
-  const totalTurns = roundInfo.clueOrder.length;
-  const currentTurnNumber = Math.min(roundInfo.currentTurnIndex + 1, totalTurns);
 
   const handleGiveClue = async () => {
     setSubmitting(true);
@@ -117,7 +138,8 @@ export function ClueTurn({ roundId, playerId, isHost, players }: ClueTurnProps) 
       {/* Header */}
       <header className="flex items-center justify-between">
         <span className="rounded-full bg-surface-raised px-3 py-1 text-xs font-semibold text-muted">
-          Turn {currentTurnNumber} of {totalTurns}
+          Clue Round {progress.clueRound} of {roundInfo.clueRoundCount} · Turn{' '}
+          {progress.turnInRound} of {progress.playersPerRound}
         </span>
         <button
           type="button"
@@ -139,7 +161,7 @@ export function ClueTurn({ roundId, playerId, isHost, players }: ClueTurnProps) 
           </h1>
           <p className="mt-2 text-sm text-muted">
             {isActivePlayer
-              ? 'Say one clue out loud to the room.'
+              ? `Give one clue for clue round ${progress.clueRound}.`
               : 'Listen carefully. Do their clues sound genuine?'}
           </p>
         </div>

@@ -1,13 +1,11 @@
 import { useEffect, useState } from 'react';
 import { getRoundResult, returnToLobby, type RoundResultSummary } from '../lib/voteService';
 import { startMatch } from '../lib/matchService';
-import type { FixedRoundCount, PublicPlayer } from '../game/types';
+import type { PublicPlayer } from '../game/types';
 
 interface RoundResultProps {
   roomId: string;
   roundId: string;
-  roundNumber: number;
-  roundLimit: FixedRoundCount;
   isHost: boolean;
   players: PublicPlayer[];
   onPlayAgain: () => void;
@@ -16,8 +14,6 @@ interface RoundResultProps {
 export function RoundResult({
   roomId,
   roundId,
-  roundNumber,
-  roundLimit,
   isHost,
   players,
   onPlayAgain,
@@ -86,8 +82,6 @@ export function RoundResult({
   }
 
   const eliminatedPlayer = players.find((p) => p.id === result.eliminatedPlayerId);
-  const matchRoundNumber = ((roundNumber - 1) % roundLimit) + 1;
-  const isFinalRound = matchRoundNumber === roundLimit;
   const imposterNicknames = players
     .filter((p) => result.imposterPlayerIds.includes(p.id))
     .map((p) => p.nickname)
@@ -143,7 +137,7 @@ export function RoundResult({
       {/* Header */}
       <header className="text-center">
         <span className="rounded-full bg-accent/20 px-3 py-1 text-xs font-bold tracking-wider uppercase text-accent">
-          {isFinalRound ? 'Game Complete' : `Round ${matchRoundNumber} of ${roundLimit}`}
+          Round Over
         </span>
         <h1 className="mt-2 text-3xl font-black text-text">Results & Scoring</h1>
       </header>
@@ -244,7 +238,7 @@ export function RoundResult({
         </section>
 
         {/* Host Controls */}
-        {isHost && !isFinalRound ? (
+        {isHost ? (
           <div className="flex flex-col gap-2">
             <button
               type="button"
@@ -262,24 +256,6 @@ export function RoundResult({
             >
               Return to Lobby
             </button>
-          </div>
-        ) : isHost ? (
-          <div className="flex flex-col gap-2">
-            <p className="rounded-xl border border-positive/30 bg-positive/10 p-3 text-center text-xs font-semibold text-positive">
-              Game complete. Return to the lobby to start another game.
-            </p>
-            <button
-              type="button"
-              onClick={handleReturnToLobby}
-              disabled={submitting}
-              className="min-h-12 rounded-xl border border-border bg-surface text-xs font-semibold text-text hover:bg-surface-raised"
-            >
-              Return to Lobby
-            </button>
-          </div>
-        ) : isFinalRound ? (
-          <div className="rounded-xl border border-positive/30 bg-positive/10 p-3 text-center text-xs font-semibold text-positive">
-            Game complete. Waiting for the host to return to the lobby.
           </div>
         ) : (
           <div className="rounded-xl border border-border bg-surface p-3 text-center text-xs text-muted">

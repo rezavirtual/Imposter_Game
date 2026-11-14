@@ -30,7 +30,7 @@
  */
 
 import { shuffle, weightedPick, type RandomSource, cryptoRandom } from './random';
-import type { PlayerId, Role } from './types';
+import type { ClueRoundCount, PlayerId, Role } from './types';
 
 /** Start weight of a regular player. */
 export const REGULAR_START_WEIGHT = 1.0;
@@ -118,6 +118,8 @@ export interface ClueTurnState {
   order: readonly PlayerId[];
   /** Index of the player currently expected to speak. */
   currentIndex: number;
+  /** Number of times every player gives a clue before discussion. */
+  clueRounds?: ClueRoundCount;
 }
 
 export type AdvanceTurnRejection =
@@ -148,7 +150,8 @@ export function advanceClueTurn(
     byHost: boolean;
   },
 ): AdvanceTurnResult {
-  if (state.currentIndex >= state.order.length) {
+  const totalTurns = state.order.length * (state.clueRounds ?? 1);
+  if (state.currentIndex >= totalTurns) {
     return { ok: false, reason: 'order_already_complete' };
   }
 
@@ -156,23 +159,50 @@ export function advanceClueTurn(
     return { ok: false, reason: 'stale_turn_index' };
   }
 
-  if (!request.byHost && state.order[state.currentIndex] !== request.requesterId) {
+  if (
+    !request.byHost &&
+    state.order[state.currentIndex % state.order.length] !== request.requesterId
+  ) {
     return { ok: false, reason: 'not_active_player' };
   }
 
   const nextIndex = state.currentIndex + 1;
-  return { ok: true, nextIndex, isComplete: nextIndex >= state.order.length };
+  return { ok: true, nextIndex, isComplete: nextIndex >= totalTurns };
 }
 
 /** The player whose turn it is, or null once every clue has been given. */
 export function activePlayerId(state: ClueTurnState): PlayerId | null {
-  return state.order[state.currentIndex] ?? null;
+  const totalTurns = state.order.length * (state.clueRounds ?? 1);
+  if (state.currentIndex >= totalTurns || state.order.length === 0) return null;
+  return state.order[state.currentIndex % state.order.length] ?? null;
 }
 
 /** Human-friendly position, e.g. "3 of 6". */
 export function turnPosition(state: ClueTurnState): { position: number; total: number } {
+  const total = state.order.length * (state.clueRounds ?? 1);
   return {
-    position: Math.min(state.currentIndex + 1, state.order.length),
-    total: state.order.length,
+    position: Math.min(state.currentIndex + 1, total),
+    total,
+  };
+}
+
+export function clueTurnProgress(state: ClueTurnState): {
+  clueRound: number;
+  turnInRound: number;
+  playersPerRound: number;
+  totalTurns: number;
+} {
+  const playersPerRound = state.order.length;
+  const totalTurns = playersPerRound * (state.clueRounds ?? 1);
+  if (playersPerRound === 0) {
+    return { clueRound: 0, turnInRound: 0, playersPerRound, totalTurns };
+  }
+
+  const currentIndex = Math.min(state.currentIndex, totalTurns - 1);
+  return {
+    clueRound: Math.floor(currentIndex / playersPerRound) + 1,
+    turnInRound: (currentIndex % playersPerRound) + 1,
+    playersPerRound,
+    totalTurns,
   };
 }

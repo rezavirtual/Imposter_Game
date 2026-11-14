@@ -2,7 +2,7 @@
  * HOST SETTINGS AND DEFAULTS
  * --------------------------
  * Defaults come straight from the specification:
- *   1 round, automatic imposter count, a random category each round,
+ *   5 match rounds, 1 clue round, automatic imposter count, a random category,
  *   Category Hint for the imposter,
  *   medium difficulty, Family age group,
  *   Global region, 30-second guidance timer, imposter allowed to start,
@@ -10,10 +10,16 @@
  */
 
 import { DEFAULT_THEME_ID } from '../config/themes';
-import type { ClueTimerSeconds, FixedRoundCount, HostSettings } from './types';
+import type {
+  ClueRoundCount,
+  ClueTimerSeconds,
+  FixedRoundCount,
+  HostSettings,
+} from './types';
 import { allowedImposterCounts, recommendedImposterCount } from './imposterCount';
 
-export const FIXED_ROUND_CHOICES: readonly FixedRoundCount[] = [1, 2, 3, 4, 5];
+export const FIXED_ROUND_CHOICES: readonly FixedRoundCount[] = [3, 5, 7, 10];
+export const CLUE_ROUND_CHOICES: readonly ClueRoundCount[] = [1, 2, 3, 4, 5];
 export const CLUE_TIMER_CHOICES: readonly (ClueTimerSeconds | null)[] = [
   null,
   15,
@@ -26,6 +32,19 @@ export const WORD_CATEGORIES = ['Animals', 'Food', 'Places', 'Objects', 'Jobs'] 
 
 export const DEFAULT_TARGET_SCORE = 15;
 
+export function clueRoundCountFromSettings(settings: unknown): ClueRoundCount {
+  if (typeof settings !== 'object' || settings === null) return 1;
+
+  const savedRounds =
+    'clueRounds' in settings
+      ? settings.clueRounds
+      : 'fixedRounds' in settings
+        ? settings.fixedRounds
+        : undefined;
+
+  return CLUE_ROUND_CHOICES.find((rounds) => rounds === savedRounds) ?? 1;
+}
+
 /**
  * Builds the default settings for a room.
  *
@@ -34,7 +53,8 @@ export const DEFAULT_TARGET_SCORE = 15;
 export function defaultHostSettings(playerCount: number): HostSettings {
   return {
     matchEndMode: 'fixed_rounds',
-    fixedRounds: 1,
+    fixedRounds: 5,
+    clueRounds: 1,
     targetScore: DEFAULT_TARGET_SCORE,
 
     imposterCountMode: 'automatic',

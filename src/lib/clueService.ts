@@ -5,12 +5,15 @@
  */
 
 import { supabase } from './supabaseClient';
+import { clueRoundCountFromSettings } from '../game/settings';
+import type { ClueRoundCount } from '../game/types';
 
 export interface RoundInfo {
   id: string;
   roundNumber: number;
   clueOrder: string[];
   currentTurnIndex: number;
+  clueRoundCount: ClueRoundCount;
 }
 
 /**
@@ -19,17 +22,28 @@ export interface RoundInfo {
 export async function getRoundInfo(roundId: string): Promise<RoundInfo | null> {
   const { data, error } = await supabase
     .from('rounds')
-    .select('id, round_number, clue_order, current_turn_index')
+    .select('id, room_id, round_number, clue_order, current_turn_index')
     .eq('id', roundId)
     .maybeSingle();
 
-  if (error || !data) return null;
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+
+  const { data: room, error: roomError } = await supabase
+    .from('rooms')
+    .select('settings')
+    .eq('id', data.room_id)
+    .maybeSingle();
+
+  if (roomError) throw new Error(roomError.message);
+  if (!room) return null;
 
   return {
     id: data.id,
     roundNumber: data.round_number,
     clueOrder: data.clue_order ?? [],
     currentTurnIndex: data.current_turn_index,
+    clueRoundCount: clueRoundCountFromSettings(room.settings),
   };
 }
 

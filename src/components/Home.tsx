@@ -5,8 +5,8 @@ import { applyTheme } from '../config/applyTheme';
 import { checkNickname } from '../game/nickname';
 import { normalizeRoomCodeInput, describeRoomCodeProblem } from '../game/roomCode';
 import { getRoomCodeFromUrl } from '../game/roomShare';
-import { FIXED_ROUND_CHOICES, WORD_CATEGORIES } from '../game/settings';
-import type { FixedRoundCount } from '../game/types';
+import { CLUE_ROUND_CHOICES, WORD_CATEGORIES } from '../game/settings';
+import type { ClueRoundCount } from '../game/types';
 import { createRoom, joinRoom, type RoomJoinResult } from '../lib/roomService';
 
 interface HomeProps {
@@ -20,7 +20,7 @@ export function Home({ onRoomJoined }: HomeProps) {
   const [mode, setMode] = useState<Mode>(roomFromLink ? 'join' : 'idle');
   const [nickname, setNickname] = useState('');
   const [category, setCategory] = useState('random');
-  const [rounds, setRounds] = useState<FixedRoundCount>(1);
+  const [clueRounds, setClueRounds] = useState<ClueRoundCount>(1);
   const [roomCode, setRoomCode] = useState(roomFromLink ?? '');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -38,7 +38,7 @@ export function Home({ onRoomJoined }: HomeProps) {
 
     setLoading(true);
     try {
-      const res = await createRoom(nickCheck.nickname, { category, fixedRounds: rounds });
+      const res = await createRoom(nickCheck.nickname, { category, clueRounds });
       onRoomJoined({ ...res, nickname: nickCheck.nickname });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create room');
@@ -207,26 +207,29 @@ export function Home({ onRoomJoined }: HomeProps) {
             </div>
 
             <div>
-              <label htmlFor="host-rounds" className="text-xs font-medium text-muted">
-                Rounds per Game
+              <label htmlFor="host-clue-rounds" className="text-xs font-medium text-muted">
+                Clue Rounds
               </label>
               <select
-                id="host-rounds"
-                value={rounds}
+                id="host-clue-rounds"
+                value={clueRounds}
                 onChange={(e) => {
-                  const selectedRounds = FIXED_ROUND_CHOICES.find(
+                  const selectedRounds = CLUE_ROUND_CHOICES.find(
                     (choice) => choice === Number(e.target.value),
                   );
-                  if (selectedRounds !== undefined) setRounds(selectedRounds);
+                  if (selectedRounds !== undefined) setClueRounds(selectedRounds);
                 }}
                 className="mt-1.5 w-full rounded-xl border border-border bg-surface-raised px-4 py-3 text-base text-text focus:border-accent focus:outline-none"
               >
-                {FIXED_ROUND_CHOICES.map((roundCount) => (
+                {CLUE_ROUND_CHOICES.map((roundCount) => (
                   <option key={roundCount} value={roundCount}>
-                    {roundCount} {roundCount === 1 ? 'Round' : 'Rounds'}
+                    {roundCount} {roundCount === 1 ? 'Clue Round' : 'Clue Rounds'}
                   </option>
                 ))}
               </select>
+              <p className="mt-1 text-xs text-muted">
+                Each player gives one clue per round before discussion and voting.
+              </p>
             </div>
 
             <button

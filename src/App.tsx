@@ -9,19 +9,10 @@ import { ImposterFinalGuess } from './components/ImposterFinalGuess';
 import { RoundResult } from './components/RoundResult';
 import { supabase } from './lib/supabaseClient';
 import type { RoomJoinResult } from './lib/roomService';
-import { FIXED_ROUND_CHOICES } from './game/settings';
-import type { FixedRoundCount, PublicPlayer } from './game/types';
+import type { PublicPlayer } from './game/types';
 import type { Phase } from './game/stateMachine';
 
 type ActiveSession = RoomJoinResult & { nickname: string };
-
-function getFixedRoundLimit(settings: unknown): FixedRoundCount {
-  if (typeof settings !== 'object' || settings === null || !('fixedRounds' in settings)) {
-    return 1;
-  }
-
-  return FIXED_ROUND_CHOICES.find((rounds) => rounds === settings.fixedRounds) ?? 1;
-}
 
 interface RoundState {
   roundId: string;
@@ -33,7 +24,6 @@ export function App() {
   const [currentRound, setCurrentRound] = useState<RoundState | null>(null);
   const [phase, setPhase] = useState<Phase>('lobby');
   const [players, setPlayers] = useState<PublicPlayer[]>([]);
-  const [roundLimit, setRoundLimit] = useState<FixedRoundCount>(1);
 
   // Keep players in sync for ClueTurn and Discussion displays
   useEffect(() => {
@@ -87,12 +77,11 @@ export function App() {
     async function checkCurrentState() {
       const { data } = await supabase
         .from('rooms')
-        .select('phase, current_round_id, round_number, settings')
+        .select('phase, current_round_id, round_number')
         .eq('id', session!.roomId)
         .maybeSingle();
 
       if (data) {
-        setRoundLimit(getFixedRoundLimit(data.settings));
         if (data.current_round_id) {
           setCurrentRound({
             roundId: data.current_round_id,
@@ -115,10 +104,8 @@ export function App() {
             phase: Phase;
             current_round_id: string | null;
             round_number: number;
-            settings: unknown;
           };
 
-          setRoundLimit(getFixedRoundLimit(updated.settings));
           if (updated.current_round_id) {
             setCurrentRound({
               roundId: updated.current_round_id,
@@ -200,8 +187,6 @@ export function App() {
       <RoundResult
         roomId={session.roomId}
         roundId={currentRound.roundId}
-        roundNumber={currentRound.roundNumber}
-        roundLimit={roundLimit}
         isHost={session.isHost}
         players={players}
         onPlayAgain={() => {

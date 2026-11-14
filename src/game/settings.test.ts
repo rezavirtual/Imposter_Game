@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import {
   defaultHostSettings,
+  clueRoundCountFromSettings,
   reconcileSettings,
+  CLUE_ROUND_CHOICES,
   CLUE_TIMER_CHOICES,
   FIXED_ROUND_CHOICES,
   WORD_CATEGORIES,
@@ -10,9 +12,10 @@ import {
 describe('specification defaults', () => {
   const settings = defaultHostSettings(6);
 
-  it('defaults to one fixed round', () => {
+  it('defaults to five fixed match rounds and one clue round', () => {
     expect(settings.matchEndMode).toBe('fixed_rounds');
-    expect(settings.fixedRounds).toBe(1);
+    expect(settings.fixedRounds).toBe(5);
+    expect(settings.clueRounds).toBe(1);
   });
 
   it('defaults to automatic imposter count', () => {
@@ -56,11 +59,20 @@ describe('imposter information defaults', () => {
 
 describe('available choices', () => {
   it('offers exactly the specified round counts', () => {
-    expect(FIXED_ROUND_CHOICES).toEqual([1, 2, 3, 4, 5]);
+    expect(FIXED_ROUND_CHOICES).toEqual([3, 5, 7, 10]);
   });
 
   it('offers off plus the specified timer lengths', () => {
     expect(CLUE_TIMER_CHOICES).toEqual([null, 15, 20, 30, 45, 60]);
+  });
+
+  it('offers one through five clue rounds', () => {
+    expect(CLUE_ROUND_CHOICES).toEqual([1, 2, 3, 4, 5]);
+  });
+
+  it('uses the previous rounds setting for rooms created by the earlier host form', () => {
+    expect(clueRoundCountFromSettings({ fixedRounds: 2 })).toBe(2);
+    expect(clueRoundCountFromSettings({ fixedRounds: 7 })).toBe(1);
   });
 
   it('offers the categories included in the word bank', () => {

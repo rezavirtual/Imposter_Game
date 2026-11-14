@@ -23,6 +23,8 @@ declare
   v_room record;
   v_active_player_id uuid;
   v_order_len integer;
+  v_clue_rounds integer;
+  v_total_turns integer;
   v_next_index integer;
   v_is_last boolean;
 begin
@@ -53,12 +55,32 @@ begin
   end if;
 
   select * into v_room from public.rooms where id = v_round.room_id and closed_at is null;
+  if not found then
+    raise exception 'Room not found or closed';
+  end if;
   if v_room.phase <> 'clue_turn' then
     raise exception 'Room is not in clue_turn phase (currently %)', v_room.phase;
   end if;
 
-  v_order_len := array_length(v_round.clue_order, 1);
-  if v_round.current_turn_index >= v_order_len then
+  v_clue_rounds := nullif(v_room.settings->>'clueRounds', '')::integer;
+  if v_clue_rounds is null then
+    v_clue_rounds := case
+      when v_room.settings->>'fixedRounds' ~ '^[1-5]$'
+        then (v_room.settings->>'fixedRounds')::integer
+      else 1
+    end;
+  end if;
+  if v_clue_rounds not between 1 and 5 then
+    raise exception 'Clue rounds must be between 1 and 5';
+  end if;
+
+  v_order_len := coalesce(array_length(v_round.clue_order, 1), 0);
+  if v_order_len = 0 then
+    raise exception 'Clue order is empty';
+  end if;
+  v_total_turns := v_order_len * v_clue_rounds;
+
+  if v_round.current_turn_index >= v_total_turns then
     raise exception 'All clues have already been given';
   end if;
 
@@ -67,13 +89,13 @@ begin
   end if;
 
   -- Verify caller is the active player
-  v_active_player_id := v_round.clue_order[v_round.current_turn_index + 1];
+  v_active_player_id := v_round.clue_order[(v_round.current_turn_index % v_order_len) + 1];
   if v_active_player_id <> p_player_id then
     raise exception 'Not your turn to give a clue';
   end if;
 
   v_next_index := v_round.current_turn_index + 1;
-  v_is_last := (v_next_index >= v_order_len);
+  v_is_last := (v_next_index >= v_total_turns);
 
   -- Update round turn index
   update public.rounds
@@ -128,6 +150,8 @@ declare
   v_room record;
   v_host_player record;
   v_order_len integer;
+  v_clue_rounds integer;
+  v_total_turns integer;
   v_next_index integer;
   v_is_last boolean;
 begin
@@ -136,7 +160,14 @@ begin
   end if;
 
   select * into v_round from public.rounds where id = p_round_id;
+  if not found then
+    raise exception 'Round not found';
+  end if;
+
   select * into v_room from public.rooms where id = v_round.room_id and closed_at is null;
+  if not found then
+    raise exception 'Room not found or closed';
+  end if;
 
   -- Verify host authority
   select * into v_host_player from public.players where id = v_room.host_player_id;
@@ -152,9 +183,28 @@ begin
     raise exception 'Stale turn index';
   end if;
 
-  v_order_len := array_length(v_round.clue_order, 1);
+  v_clue_rounds := nullif(v_room.settings->>'clueRounds', '')::integer;
+  if v_clue_rounds is null then
+    v_clue_rounds := case
+      when v_room.settings->>'fixedRounds' ~ '^[1-5]$'
+        then (v_room.settings->>'fixedRounds')::integer
+      else 1
+    end;
+  end if;
+  if v_clue_rounds not between 1 and 5 then
+    raise exception 'Clue rounds must be between 1 and 5';
+  end if;
+
+  v_order_len := coalesce(array_length(v_round.clue_order, 1), 0);
+  if v_order_len = 0 then
+    raise exception 'Clue order is empty';
+  end if;
+  v_total_turns := v_order_len * v_clue_rounds;
   v_next_index := v_round.current_turn_index + 1;
-  v_is_last := (v_next_index >= v_order_len);
+  if v_round.current_turn_index >= v_total_turns then
+    raise exception 'All clues have already been given';
+  end if;
+  v_is_last := (v_next_index >= v_total_turns);
 
   update public.rounds
   set current_turn_index = v_next_index

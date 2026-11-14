@@ -4,6 +4,7 @@ import {
   imposterFirstProbability,
   advanceClueTurn,
   activePlayerId,
+  clueTurnProgress,
   turnPosition,
   REGULAR_START_WEIGHT,
   IMPOSTER_START_WEIGHT,
@@ -191,6 +192,22 @@ describe('advancing a turn', () => {
     expect(result).toEqual({ ok: true, nextIndex: 3, isComplete: true });
   });
 
+  it('starts another clue pass after everyone has spoken and completes after all passes', () => {
+    const firstPass = advanceClueTurn(
+      { order, currentIndex: 2, clueRounds: 2 },
+      { requesterId: 'c', expectedIndex: 2, byHost: false },
+    );
+    expect(firstPass).toEqual({ ok: true, nextIndex: 3, isComplete: false });
+
+    expect(activePlayerId({ order, currentIndex: 3, clueRounds: 2 })).toBe('a');
+
+    const lastClue = advanceClueTurn(
+      { order, currentIndex: 5, clueRounds: 2 },
+      { requesterId: 'c', expectedIndex: 5, byHost: false },
+    );
+    expect(lastClue).toEqual({ ok: true, nextIndex: 6, isComplete: true });
+  });
+
   it('rejects any further advance once complete', () => {
     const result = advanceClueTurn({ order, currentIndex: 3 }, {
       requesterId: 'c',
@@ -215,5 +232,14 @@ describe('turn display helpers', () => {
   it('shows a 1-based position for players', () => {
     expect(turnPosition({ order, currentIndex: 0 })).toEqual({ position: 1, total: 3 });
     expect(turnPosition({ order, currentIndex: 2 })).toEqual({ position: 3, total: 3 });
+  });
+
+  it('shows the clue round and per-round turn position', () => {
+    expect(clueTurnProgress({ order, currentIndex: 4, clueRounds: 2 })).toEqual({
+      clueRound: 2,
+      turnInRound: 2,
+      playersPerRound: 3,
+      totalTurns: 6,
+    });
   });
 });

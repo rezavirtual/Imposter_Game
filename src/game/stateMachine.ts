@@ -201,7 +201,7 @@ export const TRANSITIONS: readonly Transition[] = [
     intent: 'all_clues_given',
     to: 'discussion',
     actor: 'system',
-    condition: 'Every eligible player has given a clue. Automatic, not a button.',
+    condition: 'Every eligible player has given a clue in every configured clue round.',
     modes: ALL_MODES,
   },
 

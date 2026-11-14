@@ -106,7 +106,8 @@ export interface PublicPlayer {
 // ---------------------------------------------------------------------------
 
 export type MatchEndMode = 'fixed_rounds' | 'target_score' | 'host_manual';
-export type FixedRoundCount = 1 | 2 | 3 | 4 | 5;
+export type FixedRoundCount = 3 | 5 | 7 | 10;
+export type ClueRoundCount = 1 | 2 | 3 | 4 | 5;
 export type ImposterCountMode = 'automatic' | 'manual';
 export type Difficulty = 'easy' | 'medium' | 'hard';
 export type AgeGroup = 'family' | 'teen' | 'adult';
@@ -116,6 +117,8 @@ export interface HostSettings {
   matchEndMode: MatchEndMode;
   /** Used when matchEndMode is 'fixed_rounds'. */
   fixedRounds: FixedRoundCount;
+  /** Number of clue passes before discussion and voting. */
+  clueRounds: ClueRoundCount;
   /** Used when matchEndMode is 'target_score'. */
   targetScore: number;
 
